@@ -1,5 +1,6 @@
 export default async function Page() {
-  const res = await fetch('http://localhost:3000/api/hello', { cache: 'no-store' })
+  // Prod'da localhost yerine göreli path kullan
+  const res = await fetch('/api/hello', { cache: 'no-store' })
   const data = await res.json().catch(() => ({ message: 'API not reachable' }))
 
   return (

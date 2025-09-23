@@ -15,6 +15,7 @@ export default function Page() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [desc, setDesc] = useState("");
 
   // Listeyi çek
   useEffect(() => {
@@ -107,16 +108,27 @@ export default function Page() {
 
         {/* input & add */}
         <div className="mt-6 flex gap-2">
+          {/* title */}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addTodo()}
             placeholder="Yeni todo…"
-            className="flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none ring-0 focus:border-gray-400"
+            className="flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none"
           />
+
+          {/* açıklama (opsiyonel) */}
+          <textarea
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            placeholder="Açıklama (opsiyonel)…"
+            rows={3}
+            className="flex-[2] rounded-lg border bg-white px-3 py-2 text-sm outline-none"
+          />
+
           <button
             onClick={() => startTransition(addTodo)}
-            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             disabled={!title.trim() || isPending}
           >
             {isPending ? "Ekleniyor…" : "Ekle"}

@@ -8,18 +8,11 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  // Gövdeyi güvenli şekilde oku + tiple
-  const { title: rawTitle, description: rawDesc } = (await req
-    .json()
-    .catch(() => ({}))) as {
-    title?: string;
-    description?: string;
-  };
-
-  const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+  const body = await req.json().catch(() => null);
+  const title = typeof body?.title === "string" ? body.title.trim() : "";
   const description =
-    typeof rawDesc === "string" && rawDesc.trim().length
-      ? rawDesc.trim()
+    typeof body?.description === "string" && body.description.trim().length
+      ? body.description.trim()
       : null;
 
   if (!title) {
@@ -27,8 +20,7 @@ export async function POST(req: Request) {
   }
 
   const todo = await prisma.todo.create({
-    data: { title, description }, // Prisma şemanda description String? olduğu için uygun
+    data: { title, description },
   });
-
   return NextResponse.json(todo, { status: 201 });
 }

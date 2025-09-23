@@ -5,7 +5,7 @@ import { useEffect, useState, useTransition } from "react";
 type Todo = {
   id: string;
   title: string;
-  description?: string; // <- opsiyonel açıklama
+  description?: string | null;
   done: boolean;
   createdAt: string;
 };
@@ -29,7 +29,7 @@ export default function Page() {
         const data: Todo[] = await res.json();
         setTodos(data);
       } catch (e: any) {
-        setError(e?.message ?? "Beklenmeyen bir hata oluştu");
+        setError(e.message ?? "Beklenmeyen bir hata oluştu");
       } finally {
         setLoading(false);
       }
@@ -46,7 +46,7 @@ export default function Page() {
     const optimistic: Todo = {
       id: `tmp-${crypto.randomUUID()}`,
       title: title.trim(),
-      description: desc.trim() || undefined,
+      description: desc.trim() ? desc.trim() : null,
       done: false,
       createdAt: new Date().toISOString(),
     };
@@ -66,10 +66,10 @@ export default function Page() {
       if (!res.ok) throw new Error("Kayıt eklenemedi");
       const created: Todo = await res.json();
 
-      // tmp’yi gerçek kayıtla değiştir
+      // tmp kaydı gerçek kayıtla değiştir
       setTodos((t) => [created, ...t.filter((x) => x.id !== optimistic.id)]);
     } catch (e: any) {
-      setError(e?.message ?? "Ekleme hatası");
+      setError(e.message ?? "Ekleme hatası");
       // optimistic’i geri al
       setTodos((t) => t.filter((x) => x.id !== optimistic.id));
     }
@@ -78,14 +78,12 @@ export default function Page() {
   // Done / tamamla
   const markDone = async (id: string) => {
     setError(null);
-    // optimistic
     setTodos((t) => t.map((x) => (x.id === id ? { ...x, done: true } : x)));
     try {
       const res = await fetch(`/api/todos/${id}`, { method: "PATCH" });
       if (!res.ok) throw new Error("Güncellenemedi");
     } catch (e: any) {
-      setError(e?.message ?? "Güncelleme hatası");
-      // geri al
+      setError(e.message ?? "Güncelleme hatası");
       setTodos((t) => t.map((x) => (x.id === id ? { ...x, done: false } : x)));
     }
   };
@@ -94,13 +92,12 @@ export default function Page() {
   const remove = async (id: string) => {
     setError(null);
     const keep = todos;
-    // optimistic
     setTodos((t) => t.filter((x) => x.id !== id));
     try {
       const res = await fetch(`/api/todos/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Silinemedi");
     } catch (e: any) {
-      setError(e?.message ?? "Silme hatası");
+      setError(e.message ?? "Silme hatası");
       setTodos(keep);
     }
   };
@@ -115,7 +112,6 @@ export default function Page() {
 
         {/* input & add */}
         <div className="mt-6 flex gap-2">
-          {/* başlık */}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -124,7 +120,6 @@ export default function Page() {
             className="flex-1 rounded-lg border bg-white px-3 py-2 text-sm outline-none"
           />
 
-          {/* açıklama (opsiyonel) */}
           <textarea
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
@@ -142,7 +137,7 @@ export default function Page() {
           </button>
         </div>
 
-        {/* durum / hatalar */}
+        {/* status / errors */}
         <div className="mt-3 min-h-6">
           {loading && (
             <span className="text-sm text-gray-500">Yükleniyor…</span>
@@ -155,51 +150,52 @@ export default function Page() {
           )}
         </div>
 
-        {/* liste */}
+        {/* list */}
         <ul className="mt-4 space-y-2">
           {todos.map((t) => (
             <li
               key={t.id}
-              className="group flex items-center justify-between rounded-lg border bg-white px-3 py-2"
+              className="group rounded-lg border bg-white px-3 py-2"
             >
-              <div className="flex items-center gap-3">
-                <span
-                  className={`h-2.5 w-2.5 rounded-full ${
-                    t.done ? "bg-emerald-500" : "bg-gray-300"
-                  }`}
-                />
-                <div className="text-sm">
-                  <div
-                    className={
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      t.done ? "bg-emerald-500" : "bg-gray-300"
+                    }`}
+                  />
+                  <span
+                    className={`text-sm ${
                       t.done ? "text-gray-400 line-through" : "text-gray-900"
-                    }
+                    }`}
                   >
                     {t.title}
-                  </div>
-                  {t.description && (
-                    <div className="mt-0.5 text-xs text-gray-500">
-                      {t.description}
-                    </div>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {!t.done && (
+                    <button
+                      onClick={() => markDone(t.id)}
+                      className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
+                    >
+                      Done
+                    </button>
                   )}
+                  <button
+                    onClick={() => remove(t.id)}
+                    className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
+                  >
+                    Sil
+                  </button>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {!t.done && (
-                  <button
-                    onClick={() => markDone(t.id)}
-                    className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
-                  >
-                    Done
-                  </button>
-                )}
-                <button
-                  onClick={() => remove(t.id)}
-                  className="rounded-md border px-2 py-1 text-xs hover:bg-gray-50"
-                >
-                  Sil
-                </button>
-              </div>
+              {/* açıklama */}
+              {t.description && (
+                <div className="mt-2 text-xs text-gray-500">
+                  {t.description}
+                </div>
+              )}
             </li>
           ))}
         </ul>

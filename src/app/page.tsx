@@ -1,3 +1,4 @@
+import type { Todo } from '@prisma/client'
 import { revalidatePath } from 'next/cache'
 
 export const dynamic = 'force-dynamic'
@@ -5,10 +6,10 @@ export const revalidate = 0
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
-async function getTodos() {
+async function getTodos(): Promise<Todo[]> {
   const res = await fetch(`${BASE}/api/todos`, { cache: 'no-store' })
   if (!res.ok) return []
-  return res.json()
+  return (await res.json()) as Todo[]
 }
 
 export default async function Page() {
@@ -45,7 +46,7 @@ export default async function Page() {
       <p className="mt-4 text-sm text-gray-600">count: {Array.isArray(todos) ? todos.length : 0}</p>
 
       <ul className="mt-2 space-y-2">
-        {todos.map((t: any) => (
+        {todos.map((t: Todo) => (
           <li key={t.id} className="flex items-center gap-3 p-2 bg-white rounded border border-gray-200">
             <span className={t.done ? 'line-through text-gray-400' : 'text-gray-900'}>{t.title}</span>
             <div className="ml-auto flex gap-2">
